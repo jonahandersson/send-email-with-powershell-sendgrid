@@ -13,30 +13,6 @@ function Send-SendEmailAzureFunction {
     [String] $contentEmailBody
   )
 
- <#
-.Synopsis
-A simple example of Azure Function with SendGrid API integration.
-.Description
-Azure function that sends mail to recipient via SendGrid and Azure. Message can be in text or html format.
-More details about SendGrid's API on https://sendgrid.com/docs/API_Reference/api_v3.html 
-More details about Azure Functions on  https://docs.microsoft.com/en-us/azure/azure-functions/
-
-.Parameter sendGridAPIKey
-The SendGrid API key associated with your account 
-.Parameter recipientEmailAddress
-The destination email address
-.Parameter senderEmailAddress
-The from email address
-.Parameter emailSubject
-Email subject
-.Parameter contentType
-The content type, values are “text/plain” or “text/html”.  "text/plain" set by default
-.Parameter contentEmailBody
-The email content of your message to send
-.Example
-Send-GridEmailAzureFunction
-#>
-
 
 ##### YOUR API Key for SendGrid Below ####
 

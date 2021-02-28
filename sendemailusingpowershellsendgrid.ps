@@ -1,0 +1,132 @@
+  
+function Send-SendEmailAzureFunction {
+  param(  
+    [Parameter(Mandatory = $true)]
+    [String] $recipientEmailAddress,
+    [Parameter(Mandatory = $true)]
+    [String] $senderEmailAddress,
+    [Parameter(Mandatory = $true)]
+    [String] $emailSubject,
+    [Parameter(Mandatory = $false)]
+    [string]$contentType = 'text/plain',
+    [Parameter(Mandatory = $true)]
+    [String] $contentEmailBody
+  )
+
+ <#
+.Synopsis
+A simple example of Azure Function with SendGrid API integration.
+.Description
+Azure function that sends mail to recipient via SendGrid and Azure. Message can be in text or html format.
+More details about SendGrid's API on https://sendgrid.com/docs/API_Reference/api_v3.html 
+More details about Azure Functions on  https://docs.microsoft.com/en-us/azure/azure-functions/
+
+.Parameter sendGridAPIKey
+The SendGrid API key associated with your account 
+.Parameter recipientEmailAddress
+The destination email address
+.Parameter senderEmailAddress
+The from email address
+.Parameter emailSubject
+Email subject
+.Parameter contentType
+The content type, values are “text/plain” or “text/html”.  "text/plain" set by default
+.Parameter contentEmailBody
+The email content of your message to send
+.Example
+Send-GridEmailAzureFunction
+#>
+
+
+##### YOUR API Key for SendGrid Below ####
+
+$sendGridAPIKey = "<SendGridAPI here>";  #TODO to replace with Azure KeyVault
+
+ $headers = @{
+    'Authorization' = 'Bearer ' + $sendGridAPIKey
+    'Content-Type'  = 'application/json'
+ }
+
+
+ $body = @{
+    personalizations = @(
+      @{
+        to = @(
+          @{
+            email = $recipientEmailAddress
+          }
+        )
+      }
+    )
+    from = @{
+      email = $senderEmailAddress
+    }
+    subject = $emailSubject
+    content = @(
+      @{
+        type  = $contentType
+        value = $contentEmailBody
+      }
+    )
+  }
+
+
+  try {
+    $emailBodyJson = $body | ConvertTo-Json -Depth 4
+  }
+  catch {
+    $ErrorMessage = $_.Exception.message
+    write-error ('Error converting body of email to JSON-format ' + $ErrorMessage)
+    Break
+  }
+
+  try {
+    Invoke-RestMethod -Uri https://api.sendgrid.com/v3/mail/send -Method Post -Headers $headers -Body $emailBodyJson 
+  }
+  catch {
+    $ErrorMessage = $_.Exception.message
+    write-error ('Error with Invoke-RestMethod ' + $ErrorMessage)
+    Break
+  }
+
+}
+
+  
+# Call Azure functions 
+# Splat of simple text format email
+
+$splatEmailPlainTextInput = @{
+    recipientEmailAddress = 'recipient@email.come'
+    senderEmailAddress = 'jonah@jonahandersson.tech'
+    emailSubject          = 'Test Email from Jonah via Azure Function - SendGrid '
+    contentEmailBody      = 'This is a test message sent from SendGrid'
+  }
+Send-SendEmailAzureFunction @splatEmailPlainTextInput
+  
+# Simple HTML  Body 
+$htmlBody = @"
+<table>
+        <tr>
+          <td align="center">Hi Email sent via SendGrid with Azure Functions</td>
+        </tr>
+        <tr>
+          <td align="center">This is the content body and it is working great!</td>
+        </tr>
+        <tr>
+          <td align="center">Regards, Jonah</td>
+        </tr>
+</table>
+"@
+
+# Splat of simple  HTML-format email
+$splatEmailHtmlInput = @{
+    recipientEmailAddress = 'recipient@email.com'
+    senderEmailAddress = 'jonah@jonahandersson.tech'
+    emailSubject          = 'Test Email from Jonah via Azure Function - SendGrid '
+    contentType      = 'text/html'
+    contentEmailBody      = $htmlBody
+  }
+  Send-SendEmailAzureFunction @splatEmailHtmlInput
+  
+
+
